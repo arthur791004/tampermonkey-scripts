@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube Helper
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.2.1
 // @description  Youtube helper
 // @author       Arthur
 // @include      /www.youtube.com
