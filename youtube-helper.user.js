@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube Helper
 // @namespace    http://tampermonkey.net/
-// @version      0.2.1
+// @version      0.2.2
 // @description  Youtube helper
 // @author       Arthur
 // @include      /www.youtube.com
@@ -14,10 +14,12 @@
     const ELEMENTS = {
         MAIN_PLAYER: 'ytd-player video.html5-main-video',
         CONFIRM_DIALOG_CONTINUE_BUTTON: 'yt-confirm-dialog-renderer .yt-spec-button-shape-next--call-to-action',
+        SKIP_AD_BUTTON: 'ytp-ad-skip-button',
     };
 
     hideYoutubeCEElement();
     enableAutoContinueIfThePlayerPausedByConfirmDialog();
+    registerSkipAdShortcut();
 
     function hideYoutubeCEElement() {
         /**
@@ -31,9 +33,6 @@
     }
 
     function enableAutoContinueIfThePlayerPausedByConfirmDialog() {
-        /**
-         * Use timer to check whether the main player exists or not.
-         */
         window.setTimeout(() => {
             const mainPlayer = document.querySelector(ELEMENTS.MAIN_PLAYER);
             if (!mainPlayer) {
@@ -43,10 +42,29 @@
             mainPlayer.addEventListener('pause', () => {
                 const continueButton = document.querySelector(ELEMENTS.CONFIRM_DIALOG_CONTINUE_BUTTON);
                 if (continueButton) {
-                    continueButton.click();
+                    mainPlayer.play();
                 }
             });
         }, 30 * 1000);
+    }
+
+    function registerSkipAdShortcut() {
+        document.addEventListener('keydown', (event) => {
+            if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 's') {
+                skipAd();
+            }
+        });
+    }
+
+    function skipAd() {
+        const adPlayer = document.querySelector('video');
+        adPlayer.currentTime = adPlayer.duration;
+        window.setTimeout(() => {
+            const skipAdButton = document.querySelector(ELEMENTS.SKIP_AD_BUTTON);
+            if ( skipAdButton ) {
+                skipAdButton.click();
+            }
+        });
     }
 
     function addGlobalStyle(css) {
