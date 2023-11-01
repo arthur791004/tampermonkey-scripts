@@ -13,8 +13,8 @@
 
     const ELEMENTS = {
         MAIN_PLAYER: 'ytd-player video.html5-main-video',
-        CONFIRM_DIALOG_CONTINUE_BUTTON: 'yt-confirm-dialog-renderer .yt-spec-button-shape-next--call-to-action',
-        SKIP_AD_BUTTON: 'ytp-ad-skip-button',
+        CONFIRM_DIALOG_CONTINUE_BUTTON: '.yt-confirm-dialog-renderer .yt-spec-button-shape-next--call-to-action',
+        SKIP_AD_BUTTON: '.ytp-ad-skip-button',
     };
 
     hideYoutubeCEElement();
