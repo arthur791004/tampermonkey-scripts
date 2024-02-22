@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Youtube Helper
 // @namespace    http://tampermonkey.net/
-// @version      0.2.3
+// @version      0.2.4
 // @description  Youtube helper
 // @author       Arthur
 // @include      /www.youtube.com
@@ -20,6 +20,7 @@
 
     hideYoutubeCEElement();
     enableAutoContinueIfThePlayerPausedByConfirmDialog();
+    enableAutoSkipAd();
     renderCustomSkipAdButton();
     registerSkipAdShortcut();
 
@@ -34,20 +35,37 @@
         `);
     }
 
-    function enableAutoContinueIfThePlayerPausedByConfirmDialog() {
-        window.setTimeout(() => {
+    function getMainPlayer(times = 0) {
+        return new Promise((resolve) => {
             const mainPlayer = document.querySelector(ELEMENTS.MAIN_PLAYER);
-            if (!mainPlayer) {
-                enableAutoContinueIfThePlayerPausedByConfirmDialog();
-                return;
+            if (mainPlayer) {
+                return resolve(mainPlayer);
             }
-            mainPlayer.addEventListener('pause', () => {
-                const continueButton = document.querySelector(ELEMENTS.CONFIRM_DIALOG_CONTINUE_BUTTON);
-                if (continueButton) {
-                    mainPlayer.play();
-                }
-            });
-        }, 30 * 1000);
+
+            // Retry if we cannot get the player when the script is loaded.
+            window.setTimeout(() => {
+                return getMainPlayer(times + 1).then(resolve);
+            }, 100 * times);
+        });
+    }
+
+    async function enableAutoContinueIfThePlayerPausedByConfirmDialog() {
+        const mainPlayer = await getMainPlayer();
+        mainPlayer.addEventListener('pause', () => {
+            const continueButton = document.querySelector(ELEMENTS.CONFIRM_DIALOG_CONTINUE_BUTTON);
+            if (continueButton) {
+                mainPlayer.play();
+            }
+        });
+    }
+
+    async function enableAutoSkipAd() {
+        const mainPlayer = await getMainPlayer();
+
+        skipAdIfPlaying();
+        mainPlayer.addEventListener('play', () => {
+            skipAdIfPlaying();
+        });
     }
 
     function renderCustomSkipAdButton() {
@@ -58,6 +76,7 @@
         }
 
         const customSkipAdButton = document.createElement('button');
+        customSkipAdButton.attritubes
         customSkipAdButton.classList.add('ytp-button');
         customSkipAdButton.innerHTML = `
           <svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="512" height="441" shape-rendering="geometricPrecision" text-rendering="geometricPrecision" image-rendering="optimizeQuality" fill-rule="evenodd" clip-rule="evenodd" viewBox="0 0 512 440.64" style="height:100%;width:100%;stroke:#fff;fill: #fff;transform: scale(0.7);">
@@ -75,9 +94,27 @@
         });
     }
 
+    function isPlayingAd() {
+        return document.querySelector('.ad-interrupting') || document.querySelector('.ad-showing');
+    }
+
+    function skipAdIfPlaying() {
+        if (!isPlayingAd()) {
+            return;
+        }
+
+        skipAd();
+    }
+
     function skipAd() {
         const adPlayer = document.querySelector('video');
-        adPlayer.currentTime = adPlayer.duration;
+        try {
+            adPlayer.currentTime = Math.ceil(adPlayer.duration);
+        } catch (e) {
+            // Retry if we cannot get the duration correctly.
+            window.setTimeout(() => skipAd(), 1000);
+            return;
+        }
         window.setTimeout(() => {
             const skipAdButton = document.querySelector(ELEMENTS.SKIP_AD_BUTTON);
             if ( skipAdButton ) {
