@@ -18,11 +18,21 @@
         SKIP_AD_BUTTON: 'button[class^=ytp-ad-skip-button]',
     };
 
+    createPolicy();
     hideYoutubeCEElement();
     enableAutoContinueIfThePlayerPausedByConfirmDialog();
     enableAutoSkipAd();
     renderCustomSkipAdButton();
     registerSkipAdShortcut();
+
+    function createPolicy() {
+         window.trustedTypes.createPolicy('default', {
+             createHTML: string => string
+             // Optional, only needed for script (url) tags
+             ,createScriptURL: string => string
+             ,createScript: string => string,
+         });
+    }
 
     function hideYoutubeCEElement() {
         /**
